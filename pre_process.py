@@ -14,13 +14,26 @@ print("Phase 1: Assembling the Master Dataset...")
 def load_and_label_data(folder_path, bank_type_label):
     all_files = glob.glob(os.path.join(folder_path, "*.csv"))
     df_list = []
+    
     for file in all_files:
-        df = pd.read_csv(file)
-        df['Bank_Type'] = bank_type_label
-        df_list.append(df)
+        try:
+            # Attempt to read the CSV
+            df = pd.read_csv(file)
+            
+            # Check if it has data before adding it
+            if not df.empty:
+                df['Bank_Type'] = bank_type_label
+                df_list.append(df)
+            else:
+                print(f"⚠️ Warning: {os.path.basename(file)} is empty. Skipping.")
+                
+        except pd.errors.EmptyDataError:
+            # This specifically catches the 0-byte "Ghost Files"
+            print(f"🚨 Warning: {os.path.basename(file)} is completely blank (0 bytes). Skipping.")
+            continue
     
     if not df_list:
-        return pd.DataFrame() # Return empty if no files found
+        return pd.DataFrame() # Return empty if no valid files found
     return pd.concat(df_list, ignore_index=True)
 
 df_govt = load_and_label_data("Govt_Banks", "Government")
@@ -62,31 +75,31 @@ class FinTechTextNormalizer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X_cleaned = X.copy()
-        for i in range(len(X_cleaned)):
-            text = str(X_cleaned.iloc[i]).lower()
-            
-            # 1. Preserve Emojis
-            for emoji, token in self.emoji_dict.items():
-                text = text.replace(emoji, token)
-                
-            # 2. Regex Cleaning (URLs, Emails, Phones, HTML)
-            text = re.sub(r'https?://\S+|www\.\S+', '', text) 
-            text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b', '', text) 
-            text = re.sub(r'(\+91[-\s]?)?[6-9]\d{9}\b', '', text) 
-            text = re.sub(r'<.*?>', '', text) 
-            
-            # 3. Expand Slang & Contractions
+        # 1. Convert the raw Numpy array back into a Pandas Series
+        if isinstance(X, np.ndarray):
+            X_series = pd.Series(X.ravel())
+        else:
+            X_series = pd.Series(X).squeeze()
+
+        # 2. Define the exact cleaning instructions
+        def clean_text(text):
+            text = str(text).lower()
+            for emoji_char, token in self.emoji_dict.items():
+                text = text.replace(emoji_char, token)
+            text = re.sub(r'https?://\S+|www\.\S+', '', text)
+            text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b', '', text)
+            text = re.sub(r'(\+91[-\s]?)?[6-9]\d{9}\b', '', text)
+            text = re.sub(r'<.*?>', '', text)
             for slang, expansion in self.fintech_dict.items():
                 text = re.sub(slang, expansion, text)
             text = contractions.fix(text)
-            
-            # 4. Final whitespace cleanup
-            text = re.sub(r'\s+', ' ', text).strip()
-            X_cleaned.iloc[i] = text
-            
-        return X_cleaned
-
+            return re.sub(r'\s+', ' ', text).strip()
+        
+        # 3. Apply the instructions to all 639k rows simultaneously (Super-fast!)
+        X_cleaned = X_series.apply(clean_text)
+        
+        # 4. Scikit-Learn expects a 2D array to be passed to the next step, so we reshape it
+        return X_cleaned.values.reshape(-1, 1)
 # =====================================================================
 # Phase 3: THE SCIKIT-LEARN PIPELINE 
 # =====================================================================
