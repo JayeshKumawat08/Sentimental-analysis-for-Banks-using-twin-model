@@ -1,5 +1,7 @@
-"""import pandas as pd
+import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 
@@ -32,11 +34,25 @@ print(f"Compressed Matrix Shape: {X_compressed.shape} (Reviews, Components)")
 #Evaluation (Variance)
 explained_variance = np.sum(svd.explained_variance_ratio_)*100
 print(f"Total Variance captured by {n_components} components: {explained_variance:.2f}%")
-print("Compression complete. The data is now ready for further analysis or modeling.")"""
+print("Compression complete. The data is now ready for further analysis or modeling.")
 
+plt.figure(figsize=(10, 6))
+cumulative_variance = np.cumsum(svd.explained_variance_ratio_) * 100
+
+plt.plot(range(1, n_components + 1), cumulative_variance, marker='.', linestyle='-', color='indigo')
+plt.axhline(y=90, color='r', linestyle='--', label='90% Information Threshold')
+
+plt.title('SVD Scree Plot: Cumulative Explained Variance', fontsize=14, fontweight='bold')
+plt.xlabel('Number of SVD Components', fontsize=12)
+plt.ylabel('Cumulative Variance Retained (%)', fontsize=12)
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.feature_extraction.text import TfidfVectorizer
 df= pd.read_csv("Final_DeepLearning_Dataset.csv")
 df['Cleaned_Content'] = df['Cleaned_Content'].fillna("").astype(str)
@@ -79,3 +95,25 @@ print(f"Projected Data Shape: {X_pca_manual.shape}")
 print("First 3 row of the new 2D Dataset")
 print(X_pca_manual[:3])
 
+
+eigenvalues_sorted = np.real(eigenvalues[sorted_indices]) 
+total_variance = np.sum(eigenvalues_sorted)
+explained_variance_ratio = eigenvalues_sorted / total_variance
+
+print("\nGenerating Visualizations...")
+plt.figure(figsize=(10, 6))
+
+# Calculate the cumulative sum of the variance 
+cumulative_variance = np.cumsum(explained_variance_ratio)
+
+# Plot all 20 of your TF-IDF features
+plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o', linestyle='-', color='royalblue')
+plt.axhline(y=0.90, color='red', linestyle='--', label='90% Information Threshold')
+
+plt.title('Scree Plot: Cumulative Explained Variance', fontsize=14, fontweight='bold')
+plt.xlabel('Number of Principal Components', fontsize=12)
+plt.ylabel('Cumulative Variance Retained', fontsize=12)
+plt.xticks(range(1, 21)) # Hardcoded to 20 because of your max_features=20
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
