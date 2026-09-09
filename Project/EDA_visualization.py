@@ -8,9 +8,7 @@ sns.set_theme(style="whitegrid")
 print("Loading the 639k row dataset...")
 # Load your master dataset (replace with your actual raw/combined dataset if needed for the 'Before' chart)
 df = pd.read_csv(r"E:\VIT\DS\Project\Final_DeepLearning_Dataset.csv")
-# ==========================================
 # Chart 1: Bank Demographics (Bar Chart)
-# ==========================================
 plt.figure(figsize=(8, 6))
 ax = sns.countplot(data=df, x='Bank_Type')
 plt.title("Total Reviews: Government vs. Private Banks", fontsize=14, pad=15)
@@ -25,9 +23,8 @@ for p in ax.patches:
 plt.tight_layout()
 plt.savefig("01_Bank_Demographics.png", dpi=300)
 plt.show()
-# ==========================================
+
 # Chart 2: Preprocessing Impact (Density Plot)
-# ==========================================
 print("Generating Chart 2...")
 
 # BULLETPROOF FIX: Fill Ghost NaNs with empty strings, force string conversion, then count
@@ -46,9 +43,8 @@ plt.savefig("02_Processed_Word_Counts.png", dpi=300)
 plt.show()
 
 
-# ==========================================
 # Chart 3: Temporal Trends (Line Chart)
-# ==========================================
+
 print("Generating Chart 3...")
 
 # Convert the 'at' column to proper DateTime objects so Pandas understands the timeline
@@ -81,3 +77,5 @@ plt.legend(title="Bank Sector")
 plt.tight_layout()
 plt.savefig("03_Temporal_Trends.png", dpi=300)
 plt.show()
+
+

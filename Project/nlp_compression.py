@@ -49,7 +49,7 @@ plt.legend()
 plt.grid(True, linestyle='--', alpha=0.5)
 plt.show()
 
-import pandas as pd
+'''import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -116,4 +116,4 @@ plt.ylabel('Cumulative Variance Retained', fontsize=12)
 plt.xticks(range(1, 21)) # Hardcoded to 20 because of your max_features=20
 plt.legend()
 plt.grid(True, linestyle='--', alpha=0.5)
-plt.show()
+plt.show()'''
