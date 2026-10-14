@@ -40,9 +40,24 @@ def load_and_label_data(folder_path, bank_type_label):
         return pd.DataFrame()
     return pd.concat(df_list, ignore_index=True)
 
-df_govt = load_and_label_data("Govt_Banks", "Government")
-df_pvt = load_and_label_data("Pvt_Banks", "Private")
+# 1. Lock the exact directory where pre_process.py is saved
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# 2. Build the exact paths to the data folders
+govt_path = os.path.join(script_dir, "Govt_Banks")
+pvt_path = os.path.join(script_dir, "Pvt_Banks")
+
+# 3. Load the data using the absolute paths
+df_govt = load_and_label_data(govt_path, "Government")
+df_pvt = load_and_label_data(pvt_path, "Private")
 df_master = pd.concat([df_govt, df_pvt], ignore_index=True)
+
+if df_master.empty:
+    raise FileNotFoundError("🚨 CRITICAL ERROR: 0 rows loaded. Python cannot find your CSV folders!")
+
+# Add a safety shield to prevent this crash from ever happening again
+if df_master.empty:
+    raise FileNotFoundError("🚨 CRITICAL ERROR: 0 rows loaded. Python cannot find your CSV folders!")
 
 # Preserve raw content for comparative EDA distributions before dropping noise columns
 df_master['Raw_Content'] = df_master['content'].fillna("").astype(str)
@@ -120,7 +135,7 @@ class FinTechTextNormalizer(BaseEstimator, TransformerMixin):
             return text if text else "[empty_review]"
         
         X_cleaned = X_series.apply(clean_text)
-        return X_cleaned.values.reshape(-1, 1)
+        return X_cleaned.to_numpy(dtype=object).reshape(-1, 1)
 
 text_pipeline = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='constant', fill_value='no review')),
